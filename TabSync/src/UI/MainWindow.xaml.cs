@@ -12,6 +12,7 @@ using AlphaTab.Model;
 using AlphaTab.Synth;
 using FontAwesome.Sharp;
 using Microsoft.Win32;
+using TabSync.src.Data;
 using TabSync.src.Util;
 
 namespace TabSync.src.UI {
@@ -21,6 +22,8 @@ namespace TabSync.src.UI {
     public partial class MainWindow : INotifyPropertyChanged {
 
         private Mp3Player player;
+        private FileSystem fsys;
+        private string currentTabPath, currentSongPath;
         
 
         private Score _tabScore;
@@ -56,6 +59,7 @@ namespace TabSync.src.UI {
             get => _songPlayBackOffset;
             set {
                 _songPlayBackOffset = value;
+                TB_SongPlayBackOffset.Text = value + "";
             }
         }
 
@@ -139,7 +143,9 @@ namespace TabSync.src.UI {
             player.Stop();
         }
         private void OnPlayPauseClicked(object sender, RoutedEventArgs e) {
+            AlphaTab.Api.MasterVolume = CurrentVolume / 100.0 * 3.0;
             AlphaTab.Api.PlayPause();
+            
             if (AlphaTab.Api.PlayerState == PlayerState.Paused) { // When unpausing
                 player.Seek(CurrentTimePosition.TotalMilliseconds + SongPlaybackOffset);
                 player.Play();
@@ -212,10 +218,6 @@ namespace TabSync.src.UI {
             
             InitializeComponent();
             DataContext = this;
-            CurrentZoomLevel = 1.0;
-            CurrentLayoutMode = LayoutMode.Page;
-            CurrentVolume = 40;
-            CurrentSongVolume = 50;
             player = new Mp3Player();
             
         }
@@ -241,14 +243,21 @@ namespace TabSync.src.UI {
         private void OpenSongFile(string filename) {
             player.DeletePlayer();
             player.Load(filename);
+            currentSongPath = filename;
+            CurrentSongVolume = 50;
         } 
 
         private void OpenFile(string filename) {
             try {
                 TabScore = ScoreLoader.LoadScoreFromBytes(File.ReadAllBytes(filename));
+                currentTabPath = filename;
             }catch(Exception e) {
                 MessageBox.Show("Failed to open file: " + e.Message);
             }
+
+            CurrentZoomLevel = 1.0;
+            CurrentLayoutMode = LayoutMode.Page;
+            CurrentVolume = 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -294,6 +303,10 @@ namespace TabSync.src.UI {
                 CurrentTimePosition = TimeSpan.FromMilliseconds(pe.CurrentTime);
                 TotalTimePosition = TimeSpan.FromMilliseconds(pe.EndTime);
             });
+
+            AlphaTab.Api.PlayerFinished.On(() => {
+                player?.Stop(); // Stop player on finish to prevent a bug which causes the song to loop
+            });
         }
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e) {
@@ -310,13 +323,64 @@ namespace TabSync.src.UI {
             SongPlaybackOffset = result;
         }
 
-        private void SongVolumeMouseUp(object sender, RoutedPropertyChangedEventArgs<double> e) {
-            CurrentSongVolume = ((Slider)sender).Value;
-        }
 
         static void UnhandledHandler(object sender, UnhandledExceptionEventArgs e) {
             Exception ex = (Exception)e.ExceptionObject;
             MessageBox.Show("Unhandled Exception: " + ex.Message);
+        }
+
+        public void InitFileSystem(FileSystem fsys) {
+            this.fsys = fsys;
+            OpenFile(fsys.GetJsonObject().TabPath);
+            OpenSongFile(fsys.GetJsonObject().SongPath);
+            SongPlaybackOffset = fsys.GetJsonObject().SongPlaybackOffset;
+        }
+
+        public void SaveToFileClick(object sender, RoutedEventArgs e) {
+            if (fsys == null) {
+                SaveFileDialog sdlg = new SaveFileDialog();
+                sdlg.FileName = "Unknown";
+                sdlg.DefaultExt = ".cstab";
+                sdlg.Filter = "CsTab Files (.cstab)|*.cstab";
+
+                if (sdlg.ShowDialog().GetValueOrDefault()) {
+                    fsys = new FileSystem(sdlg.FileName);
+                }
+            }
+
+            fsys.GetJsonObject().TabPath = currentTabPath;
+            fsys.GetJsonObject().SongPath = currentSongPath;
+            fsys.GetJsonObject().SongPlaybackOffset = SongPlaybackOffset;
+            fsys.Save();
+        }
+
+        public void OpenCstabFile(object sender, RoutedEventArgs e) {
+            if(UnsavedChanges()) {
+                MessageBoxResult result = MessageBox.Show("Save unsaved changes?", "Save?", MessageBoxButton.YesNoCancel);
+                if(result == MessageBoxResult.Yes) {
+                    SaveToFileClick(null, null);
+                }else if(result == MessageBoxResult.Cancel) {
+                    return;
+                }
+            }
+            var dialog = new OpenFileDialog {
+                Filter = "CsTab Files (.cstab)|*.cstab"
+            };
+            if (dialog.ShowDialog().GetValueOrDefault()) {
+                FileSystem fsysNew = new FileSystem(dialog.FileName);
+                InitFileSystem(fsysNew);
+            }
+        }
+
+        private bool UnsavedChanges() {
+            return fsys == null || !(fsys.GetJsonObject().TabPath.Equals(currentTabPath) &&
+                fsys.GetJsonObject().SongPath.Equals(currentSongPath) &&
+                fsys.GetJsonObject().SongPlaybackOffset == SongPlaybackOffset);
+        }
+
+        public void CreditsInfoClick(object sender, RoutedEventArgs e) {
+            AboutBox abt = new AboutBox();
+            abt.ShowDialog();
         }
     }
 }

@@ -7,8 +7,8 @@
         xmlns:wpf="clr-namespace:AlphaTab.Wpf;assembly=AlphaTab.Windows" 
         xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance local:MainWindow}"
-        Title="MainWindow" Height="450" Width="800">
+        Title="TabSync" Height="450" Width="800" Icon="/src/UI/icon.png">
+    <!--d:DataContext="{d:DesignInstance local:MainWindow}"-->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -344,6 +344,7 @@
                 <!--<ToggleButton IsChecked="{Binding IsCountInActive}" ToolTip="Count in">
                     <fa:IconBlock Icon="HourglassHalf" />
                 </ToggleButton>-->
+                
                 <ToggleButton IsChecked="{Binding IsMetronomeActive}" ToolTip="Metronome">
                     <fa:IconBlock Icon="HourglassHalf" />
                 </ToggleButton>
@@ -373,7 +374,7 @@
                     <fa:IconBlock Icon="music" />
                 </Button>
                 <TextBlock Margin="10,0,10,0">Song Offset (in ms):</TextBlock>
-                <TextBox PreviewTextInput="NumberValidationTextBox" TextChanged="SongOffsetTextChanged" Width="130" Height="20"/>
+                <TextBox x:Name="TB_SongPlayBackOffset" PreviewTextInput="NumberValidationTextBox" TextChanged="SongOffsetTextChanged" Width="130" Height="20"/>
                 <TextBlock Margin="10,0,0,0">offset=position at beat 0</TextBlock>
                 
             </StackPanel>
@@ -390,12 +391,23 @@
                     SmallChange="1"
                     Maximum="100"
                     Width="50" 
-                    Margin="10,0,167,0" 
+                    Margin="10,0,27,0" 
                     Value="{Binding CurrentSongVolume}" />
                 <!--ValueChanged="SongVolumeMouseUp"
                     Value="50"/>-->
-                    <!--Value="{Binding CurrentSongVolume}"--> 
-                    
+                    <!--Value="{Binding CurrentSongVolume}"-->
+                
+                <Button Click="OpenCstabFile" ToolTip="Open CsTab File" Margin="10,0,0,0">
+                    <fa:IconBlock Icon="FolderOpen" />
+                </Button>
+                
+                <Button Click="SaveToFileClick" ToolTip="Save To File" Margin="0,0,00,0">
+                    <fa:IconBlock Icon="Save" />
+                </Button>
+
+                <Button Click="CreditsInfoClick" ToolTip="Info" Margin="0,0,10,0">
+                    <fa:IconBlock Icon="Info" />
+                </Button>
             </StackPanel>
         </Grid>
 

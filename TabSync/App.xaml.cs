@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
+using TabSync.src.Data;
+using TabSync.src.UI;
 
-namespace TabSynq {
+namespace TabSync {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application {
 
-        
-
+        void Application_Startup(object sender, StartupEventArgs e) {
+            MainWindow wnd = new MainWindow();
+            if(e.Args.Length > 0) {
+                FileSystem fsys = new FileSystem(e.Args[0]);
+                wnd.InitFileSystem(fsys);
+            }
+            wnd.Show();
+        }
     }
 }

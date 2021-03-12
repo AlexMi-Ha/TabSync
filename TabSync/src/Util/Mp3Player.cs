@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Windows.Media;
 
 namespace TabSync.src.Util {
@@ -8,7 +7,7 @@ namespace TabSync.src.Util {
 
         private MediaPlayer player;
 
-        public double Duration => player?.NaturalDuration.TimeSpan.TotalSeconds ?? 0;
+        public double Duration => player?.NaturalDuration.TimeSpan.TotalMilliseconds ?? 0;
 
         public double CurrentPosition => player?.Position.TotalMilliseconds ?? 0;
 
@@ -48,6 +47,7 @@ namespace TabSync.src.Util {
                 player.MediaEnded += OnPlaybackEnded;
             }
             Loop = false;
+            
             return player != null && player.Source != null;
         }
 
@@ -61,9 +61,10 @@ namespace TabSync.src.Util {
         }
 
         private void OnPlaybackEnded(object sender, EventArgs args) {
-            if (_isPlaying && Loop) {
+            Stop();
+            /*if (_isPlaying && Loop) {
                 Play();
-            }
+            }*/
 
             PlaybackEnded?.Invoke(sender, args);
         }
@@ -74,8 +75,7 @@ namespace TabSync.src.Util {
                 return;
 
             if (IsPlaying) {
-                Pause();
-                Seek(0);
+                Stop();
             }
 
             _isPlaying = true;
@@ -96,6 +96,7 @@ namespace TabSync.src.Util {
         //position in ms
         public void Seek(double position) {
             if (player == null) return;
+            if (position >= Duration) return;
             player.Position = TimeSpan.FromMilliseconds(position);
         }
 

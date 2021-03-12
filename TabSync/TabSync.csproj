@@ -4,7 +4,12 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="src\UI\icon.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AlphaTab.Windows" Version="1.2.0" />
@@ -14,6 +19,10 @@
 
   <ItemGroup>
     <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="src\UI\icon.png" />
   </ItemGroup>
 
 </Project>

@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Windows;
 using Newtonsoft.Json;
 
 using TabSync.src.Data.json;
 
 namespace TabSync.src.Data {
-    class FileSystem {
+    public class FileSystem {
 
         private JsonObject jsonContent; //content of the Json file saved as a custom Object
-        private AlphaTab.Model.Score tabScore;
 
         private string filename;    //path of the save file json
 
@@ -61,18 +57,11 @@ namespace TabSync.src.Data {
             }
             jsonContent = JsonConvert.DeserializeObject<JsonObject>(json);
 
-            var data = File.ReadAllBytes(jsonContent.TabPath);
-            var settings = new AlphaTab.Settings();
-            tabScore = AlphaTab.Importer.ScoreLoader.LoadScoreFromBytes(data, settings);
 
         }
 
         public JsonObject GetJsonObject() {
             return jsonContent;
-        }
-
-        public AlphaTab.Model.Score GetTabScore() {
-            return tabScore;
         }
 
     }
