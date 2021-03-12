@@ -341,15 +341,15 @@
                     Margin="10,0,10,0" 
                     Value="{Binding CurrentVolume}" />
 
-                <ToggleButton IsChecked="{Binding IsCountInActive}" ToolTip="Count in">
+                <!--<ToggleButton IsChecked="{Binding IsCountInActive}" ToolTip="Count in">
+                    <fa:IconBlock Icon="HourglassHalf" />
+                </ToggleButton>-->
+                <ToggleButton IsChecked="{Binding IsMetronomeActive}" ToolTip="Metronome">
                     <fa:IconBlock Icon="HourglassHalf" />
                 </ToggleButton>
-                <ToggleButton IsChecked="{Binding IsMetronomeActive}" ToolTip="Metronome">
-                    <fa:IconBlock Icon="Edit" />
-                </ToggleButton>
-                <ToggleButton IsChecked="{Binding IsLooping}" ToolTip="Loop">
+                <!--<ToggleButton IsChecked="{Binding IsLooping}" ToolTip="Loop">
                     <fa:IconBlock Icon="Retweet" />
-                </ToggleButton>
+                </ToggleButton>-->
                 <fa:IconBlock Icon="Search" />
                 <ComboBox
                 ItemStringFormat="{}{0:P0}"
@@ -362,7 +362,41 @@
                     SelectedItem="{Binding CurrentLayoutMode}"/>
                 
             </StackPanel>
-            
+
+            <StackPanel 
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                HorizontalAlignment="Left"
+                Orientation="Horizontal" >
+                <Button Click="OnOpenSongClick" ToolTip="Load Song">
+                    <fa:IconBlock Icon="music" />
+                </Button>
+                <TextBlock Margin="10,0,10,0">Song Offset (in ms):</TextBlock>
+                <TextBox PreviewTextInput="NumberValidationTextBox" TextChanged="SongOffsetTextChanged" Width="130" Height="20"/>
+                <TextBlock Margin="10,0,0,0">offset=position at beat 0</TextBlock>
+                
+            </StackPanel>
+            <StackPanel
+                Grid.Row="1"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal" >
+                <fa:IconBlock Icon="VolumeUp"  />
+                <Slider 
+                    Style="{StaticResource Horizontal_Slider}" 
+                    VerticalAlignment="Center" 
+                    SmallChange="1"
+                    Maximum="100"
+                    Width="50" 
+                    Margin="10,0,167,0" 
+                    Value="{Binding CurrentSongVolume}" />
+                <!--ValueChanged="SongVolumeMouseUp"
+                    Value="50"/>-->
+                    <!--Value="{Binding CurrentSongVolume}"--> 
+                    
+            </StackPanel>
         </Grid>
 
         <Grid
