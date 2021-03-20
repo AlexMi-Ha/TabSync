@@ -29,22 +29,23 @@ namespace TabSync.src.UI {
         private Score _tabScore;
         private Track _selectedTrack;
 
+        // Load the complete Score in the File
         public Score TabScore {
             get => _tabScore;
             set {
                 if (Equals(value, _tabScore)) return;
                 _tabScore = value;
-                //OnPropertyChanged();
                 SelectedTrack = _tabScore.Tracks[0];
                 OnPropertyChanged();
             }
         }
+
+        // Load the selected Track in the score
         public Track SelectedTrack {
             get => _selectedTrack;
             set {
                 if (Equals(value, _selectedTrack)) return;
                 _selectedTrack = value;
-                //OnPropertyChanged();
 
                 AlphaTab.Tracks = new[] {
                     _selectedTrack
@@ -54,6 +55,7 @@ namespace TabSync.src.UI {
             }
         }
 
+        // Get/Set for the playback offset of the mp3 file
         private long _songPlayBackOffset;
         public long SongPlaybackOffset {
             get => _songPlayBackOffset;
@@ -77,20 +79,6 @@ namespace TabSync.src.UI {
         //    }
         //}
 
-        private bool _isMetronomeActive;
-        public bool IsMetronomeActive {
-            get => _isMetronomeActive;
-            set {
-                if (value == _isMetronomeActive) return;
-                _isMetronomeActive = value;
-                OnPropertyChanged();
-                if(AlphaTab.Api != null) {
-                    AlphaTab.Api.MetronomeVolume = value ? 1 : 0;
-                }
-            }
-        }
-
-        // Unused - Maybe implemented in a later version
         //private bool _isLooping;
         //public bool IsLooping {
         //    get => _isLooping;
@@ -104,6 +92,22 @@ namespace TabSync.src.UI {
         //    }
         //}
 
+
+        // De-/Activate Metronome playback
+        private bool _isMetronomeActive;
+        public bool IsMetronomeActive {
+            get => _isMetronomeActive;
+            set {
+                if (value == _isMetronomeActive) return;
+                _isMetronomeActive = value;
+                OnPropertyChanged();
+                if(AlphaTab.Api != null) {
+                    AlphaTab.Api.MetronomeVolume = value ? 1 : 0;
+                }
+            }
+        }
+
+        // Setting for the Zoom Level of the Tab renderer
         public double[] ZoomLevels { get; } = { .25, .5, .75, .9, 1.0, 1.1, 1.25, 1.5, 2 };
         private double _currentZoomLevel;
         public double CurrentZoomLevel {
@@ -121,6 +125,7 @@ namespace TabSync.src.UI {
             }
         }
 
+        // Setting for the two Layout Modes of the Tab renderer
         public LayoutMode[] LayoutModes { get; } = new[] { LayoutMode.Page, LayoutMode.Horizontal };
         private LayoutMode _currentLayoutMode;
         public LayoutMode CurrentLayoutMode {
@@ -136,6 +141,20 @@ namespace TabSync.src.UI {
                 }
             }
         }
+
+        // Set Visibility of the File-Loading indicator
+        private Visibility _loadingIndicatorVisibility = Visibility.Collapsed;
+        public Visibility LoadingIndicatorVisibility {
+            get => _loadingIndicatorVisibility;
+            set {
+                if (value == _loadingIndicatorVisibility) return;
+                _loadingIndicatorVisibility = value;
+                OnPropertyChanged();
+            }
+        }
+
+        //--------------------------------
+        // Player functions
 
         public bool IsPlayerReady => AlphaTab.Api?.IsReadyForPlayback ?? false;
         private void OnStopClicked(object sender, RoutedEventArgs e) {
@@ -155,6 +174,10 @@ namespace TabSync.src.UI {
             }
         }
 
+        //--------------------------------------------------------
+
+
+        // Update the Time position (display only) in the Playback
         private TimeSpan _currentTimePosition;
         public TimeSpan CurrentTimePosition {
             get => _currentTimePosition;
@@ -174,6 +197,7 @@ namespace TabSync.src.UI {
             }
         }
 
+        // Volume Adjustment for the Tab playback
         private double _currentVolume;
         public double CurrentVolume {
             get => _currentVolume;
@@ -188,6 +212,8 @@ namespace TabSync.src.UI {
             }
         }
 
+
+        // Volume Adjustment for the MP3 Player Playback
         private double _currentSongVolume;
         public double CurrentSongVolume {
             get => _currentSongVolume;
@@ -201,17 +227,13 @@ namespace TabSync.src.UI {
             }
         }
 
-        private Visibility _loadingIndicatorVisibility = Visibility.Collapsed;
-        public Visibility LoadingIndicatorVisibility {
-            get => _loadingIndicatorVisibility;
-            set {
-                if (value == _loadingIndicatorVisibility) return;
-                _loadingIndicatorVisibility = value;
-                OnPropertyChanged();
-            }
-        }
 
         public MainWindow() {
+            // Catch Unhandled Exceptions:
+            //     The AlphaTab player throws exception sometimes 
+            //     Sadly I can do nothing against it but disabling most unhandled Exceptions
+            //     Some Exceptions by the AlphaTab API may come through anyways
+            //     Well rip if it does :)
             AppDomain domain = AppDomain.CurrentDomain;
             domain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledHandler);
             Application.Current.DispatcherUnhandledException += (s, e) => { MessageBox.Show("Error: " + e.Exception.Message); };
@@ -222,6 +244,7 @@ namespace TabSync.src.UI {
             
         }
 
+        // OpenFileDialog Opener for the Tab Files
         private void OnOpenClick(object sender, RoutedEventArgs e) {
             var dialog = new OpenFileDialog {
                 Filter = "Supported Files (*.gp3, *.gp4, *.gp5, *.gpx, *.gp)|*.gp3;*.gp4;*.gp5;*.gpx;*.gp"
@@ -231,6 +254,7 @@ namespace TabSync.src.UI {
             }
         }
 
+        // OpenFileDialog Opener for the Mp3 Files
         private void OnOpenSongClick(object sender, RoutedEventArgs e) {
             var dialog = new OpenFileDialog {
                 Filter = "Supported Files (*.mp3)|*.mp3"
@@ -240,45 +264,54 @@ namespace TabSync.src.UI {
             }
         }
 
+        // OpenFile Manager for the Tab Files
+        private void OpenFile(string filename) {
+            // Read the File and open it via the TabScore Setter
+            try {
+                TabScore = ScoreLoader.LoadScoreFromBytes(File.ReadAllBytes(filename));
+                currentTabPath = filename;
+            } catch (Exception e) {
+                MessageBox.Show("Failed to open file: " + e.Message);
+            }
+
+            // Default Settings for the Player
+            CurrentZoomLevel = 1.0;
+            CurrentLayoutMode = LayoutMode.Page;
+            CurrentVolume = 0;
+        }
+
+        // OpenFile Manager for the Mp3 Files
         private void OpenSongFile(string filename) {
+            // Reset player and Load new File + set volume
             player.DeletePlayer();
             player.Load(filename);
             currentSongPath = filename;
             CurrentSongVolume = 50;
         } 
 
-        private void OpenFile(string filename) {
-            try {
-                TabScore = ScoreLoader.LoadScoreFromBytes(File.ReadAllBytes(filename));
-                currentTabPath = filename;
-            }catch(Exception e) {
-                MessageBox.Show("Failed to open file: " + e.Message);
-            }
-
-            CurrentZoomLevel = 1.0;
-            CurrentLayoutMode = LayoutMode.Page;
-            CurrentVolume = 0;
-        }
+        
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        // Add all needed Event Handlers to the AlphaTab API
         private void OnAlphaTabLoaded(object sender, RoutedEventArgs e) {
+            // Dis-/Enable the Loading indicator
             AlphaTab.Api.RenderStarted.On(e => {
                 LoadingIndicatorVisibility = Visibility.Visible;
             });
             AlphaTab.Api.RenderFinished.On(e => {
                 LoadingIndicatorVisibility = Visibility.Collapsed;
             });
+
+            // Update Play button icon
             AlphaTab.Api.PlayerStateChanged.On(pe => {
                 PlayPauseIcon.Icon = pe.State == PlayerState.Playing ? IconChar.Pause : IconChar.Play;
             });
-            AlphaTab.Api.PlayerReady.On(() => {
-                OnPropertyChanged(nameof(IsPlayerReady));
-            });
 
+            // Manage Player position changes
             var previousTime = -1;
             AlphaTab.Api.PlayerPositionChanged.On(pe => {
                 var currentSeconds = (int)(pe.CurrentTime / 1000);
@@ -291,13 +324,13 @@ namespace TabSync.src.UI {
                         double off = Math.Abs(player.CurrentPosition - (pe.CurrentTime + SongPlaybackOffset));
                         if (off > 50) {
                             player.Seek(pe.CurrentTime + SongPlaybackOffset); // -> adjust
+                            // Adjusting this OnPlaybackTimeChange results in better
+                            // and more synchronized playback of the mp3 with the Tab file
                         }
-                        //else if(off > 20) {
-                        //    AlphaTab.Api.Player.TimePosition = Math.Max(player.CurrentPosition - SongPlaybackOffset, 0);
-                        //}
                     }
                 }
 
+                // if new second count -> Adjust TimePosition Labels
                 previousTime = currentSeconds;
 
                 CurrentTimePosition = TimeSpan.FromMilliseconds(pe.CurrentTime);
@@ -307,8 +340,13 @@ namespace TabSync.src.UI {
             AlphaTab.Api.PlayerFinished.On(() => {
                 player?.Stop(); // Stop player on finish to prevent a bug which causes the song to loop
             });
+
+            AlphaTab.Api.PlayerReady.On(() => {
+                OnPropertyChanged(nameof(IsPlayerReady));
+            });
         }
 
+        // Song Playback Offset Input Handler and Updater 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e) {
             Regex regex = new Regex("[0-9]");
             e.Handled = !regex.IsMatch(e.Text);
@@ -323,20 +361,18 @@ namespace TabSync.src.UI {
             SongPlaybackOffset = result;
         }
 
-
-        static void UnhandledHandler(object sender, UnhandledExceptionEventArgs e) {
-            Exception ex = (Exception)e.ExceptionObject;
-            MessageBox.Show("Unhandled Exception: " + ex.Message);
-        }
-
+        // Initialize a new FileSystem
         public void InitFileSystem(FileSystem fsys) {
             this.fsys = fsys;
+            // Update all info
+            SongPlaybackOffset = fsys.GetJsonObject().SongPlaybackOffset;
             OpenFile(fsys.GetJsonObject().TabPath);
             OpenSongFile(fsys.GetJsonObject().SongPath);
-            SongPlaybackOffset = fsys.GetJsonObject().SongPlaybackOffset;
         }
 
+        // save the currently open CsTab File
         public void SaveToFileClick(object sender, RoutedEventArgs e) {
+            // Currently Unsaved?
             if (fsys == null) {
                 SaveFileDialog sdlg = new SaveFileDialog();
                 sdlg.FileName = "Unknown";
@@ -347,40 +383,54 @@ namespace TabSync.src.UI {
                     fsys = new FileSystem(sdlg.FileName);
                 }
             }
-
+            // Save to File
             fsys.GetJsonObject().TabPath = currentTabPath;
             fsys.GetJsonObject().SongPath = currentSongPath;
             fsys.GetJsonObject().SongPlaybackOffset = SongPlaybackOffset;
             fsys.Save();
         }
 
+        // Managing the OpenFileDialog for opening a CsTab File
         public void OpenCstabFile(object sender, RoutedEventArgs e) {
+            // are there any unsaved Changes? -> Save yes? no? cancel?
             if(UnsavedChanges()) {
                 MessageBoxResult result = MessageBox.Show("Save unsaved changes?", "Save?", MessageBoxButton.YesNoCancel);
                 if(result == MessageBoxResult.Yes) {
-                    SaveToFileClick(null, null);
+                    SaveToFileClick(null, null); // Save
                 }else if(result == MessageBoxResult.Cancel) {
                     return;
                 }
             }
+            // Open the Dialog to find the CsTab file wanted
             var dialog = new OpenFileDialog {
                 Filter = "CsTab Files (.cstab)|*.cstab"
             };
+            // Open it
             if (dialog.ShowDialog().GetValueOrDefault()) {
                 FileSystem fsysNew = new FileSystem(dialog.FileName);
                 InitFileSystem(fsysNew);
             }
         }
 
+        // Are there any Unsaved changes or is there no SaveFile connected to this session?
         private bool UnsavedChanges() {
             return fsys == null || !(fsys.GetJsonObject().TabPath.Equals(currentTabPath) &&
                 fsys.GetJsonObject().SongPath.Equals(currentSongPath) &&
                 fsys.GetJsonObject().SongPlaybackOffset == SongPlaybackOffset);
         }
 
+        // Open the Program Info About Box
         public void CreditsInfoClick(object sender, RoutedEventArgs e) {
             AboutBox abt = new AboutBox();
             abt.ShowDialog();
+        }
+
+
+        // Exception handler for Unhandled Exception
+        // See MainWindow constructor for more info
+        static void UnhandledHandler(object sender, UnhandledExceptionEventArgs e) {
+            Exception ex = (Exception)e.ExceptionObject;
+            MessageBox.Show("Unhandled Exception: " + ex.Message);
         }
     }
 }

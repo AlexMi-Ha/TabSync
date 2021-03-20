@@ -1,0 +1,4 @@
+﻿TabSync v1.0.1 Changelog
+
+- Fixed Bug: Opening a CsTab file with the TabSync.exe freezes the Tab playback
+- Added Comments to the Code

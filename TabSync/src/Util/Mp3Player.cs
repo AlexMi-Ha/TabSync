@@ -3,6 +3,7 @@ using System.Windows.Media;
 
 namespace TabSync.src.Util {
     public class Mp3Player {
+        
         public event EventHandler PlaybackEnded;
 
         private MediaPlayer player;
@@ -32,7 +33,6 @@ namespace TabSync.src.Util {
         }
         private bool _isPlaying;
 
-        public bool Loop { get; set; }
 
         public bool CanSeek => player != null;
 
@@ -46,7 +46,6 @@ namespace TabSync.src.Util {
                 player.Open(new Uri(fileName));
                 player.MediaEnded += OnPlaybackEnded;
             }
-            Loop = false;
             
             return player != null && player.Source != null;
         }
@@ -55,6 +54,7 @@ namespace TabSync.src.Util {
             Stop();
 
             if (player != null) {
+                player.Close();
                 player.MediaEnded -= OnPlaybackEnded;
                 player = null;
             }
@@ -62,9 +62,6 @@ namespace TabSync.src.Util {
 
         private void OnPlaybackEnded(object sender, EventArgs args) {
             Stop();
-            /*if (_isPlaying && Loop) {
-                Play();
-            }*/
 
             PlaybackEnded?.Invoke(sender, args);
         }
@@ -99,6 +96,8 @@ namespace TabSync.src.Util {
             if (position >= Duration) return;
             player.Position = TimeSpan.FromMilliseconds(position);
         }
+
+
 
         private void SetVolume(double volume, double balance) {
             if (player == null || _isDisposed) return;
